@@ -1,1 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>விடுகதை வினாடி வினா - Kadi Jokes Quiz</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Font suitable for Tamil and a fun look */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+Chettan+2:wght@600;800&display=swap');
+        
+        :root {
+            /* DARK MODE (Default) */
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg-start: #1e293b;
+            --card-bg-end: #0f172a;
+            --joke-bg: #1f2937;
+            --header-color: #facc15; /* Yellow-400 */
+            --accent-color: #f97316; /* Orange-500 */
+            --button-shadow: #c2410c; /* Dark Orange */
+            --nav-button-bg: #3b82f6;
+            --nav-button-shadow: #1d4ed8;
+            --emoji-opacity: 0.05;
+        }
 
+        [data-theme='light'] {
+            /* LIGHT MODE */
+            --bg-color: #f1f5f9; /* Slate-100 */
+            --text-color: #1f2937;
+            --card-bg-start: #ffffff;
+            --card-bg-end: #f8fafc;
+            --joke-bg: #e2e8f0;
+            --header-color: #fb923c; /* Orange-400 */
+            --accent-color: #ea580c; /* Orange-600 */
+            --button-shadow: #c2410c;
+            --nav-button-bg: #1e40af;
+            --nav-button-shadow: #1e3a8a;
+            --emoji-opacity: 0.1;
+        }
+
+        body {
+            font-family: 'Baloo Chettan 2', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            
+            /* Emoji Background Pattern */
+            background-image: repeating-linear-gradient(
+                45deg, 
+                rgba(255, 255, 255, var(--emoji-opacity)) 0, 
+                rgba(255, 255, 255, var(--emoji-opacity)) 5px, 
+                transparent 5px, 
+                transparent 10px
+            ),
+            url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='10' y='30' font-size='20'%3E💡%3C/text%3E%3Ctext x='50' y='70' font-size='20'%3E🤔%3C/text%3E%3Ctext x='80' y='10' font-size='20'%3E😂%3C/text%3E%3C/svg%3E");
+            background-size: 150px, 80px;
+            background-repeat: repeat, repeat;
+            background-attachment: fixed;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, var(--card-bg-start), var(--card-bg-end));
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+            border: 3px solid var(--accent-color);
+        }
+
+        .joke-container {
+            background-color: var(--joke-bg);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-style {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 0 0 var(--button-shadow); /* 3D effect */
+            user-select: none;
+        }
+
+        .button-style:active {
+            box-shadow: 0 0px 0 0 var(--button-shadow);
+            transform: translateY(4px);
+        }
+
+        .level-button:hover, .time-button:hover, #dark-mode-toggle:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .selected {
+            border: 4px solid #3b82f6 !important; /* Blue-500 border for selected state */
+            transform: scale(1.05);
+            box-shadow: 0 6px 0 0 #1d4ed8;
+        }
+        
+        /* Timer Indicator Styling */
+        #timer-bar-container {
+            background-color: var(--joke-bg);
+        }
+
+        #timer-bar {
+            /* Colors handled dynamically in JS */
+            transition: width 0.1s linear;
+        }
+
+        .disabled-nav {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none !important;
+            transform: none !important;
+            background-color: var(--nav-button-bg) !important;
+        }
+        .nav-button-style {
+            box-shadow: 0 4px 0 0 var(--nav-button-shadow);
+            background-color: var(--nav-button-bg);
+        }
+    </style>
+</head>
+<body data-theme="dark" class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-xl mx-auto card p-6 md:p-8 rounded-xl">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-center tracking-wide" style="color: var(--header-color);">
+                விடுகதை வினாடி வினா
+            </h1>
+            <!-- Dark/Light Mode Toggle Button -->
+            <button id="dark-mode-toggle" onclick="toggleDarkMode()" 
+                    class="p-2 rounded-full text-xl transition-colors duration-300 button-style" 
+                    style="background-color: var(--joke-bg); color: var(--text-color); box-shadow: 0 3px 0 0 var(--button-shadow);">
+                🌙
+            </button>
+        </div>
+        
+        <!-- --- Start Screen --- -->
+        <div id="start-screen" class="screen">
+            <p class="text-center mb-8 text-xl" style="color: var(--text-color);">
+                விளையாட நேரம் மற்றும் நிலையைத் தேர்ந்தெடுக்கவும்.
+            </p>
+
+            <!-- Time Selection -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4" style="color: var(--accent-color);">நேரத் தேர்வு (Time Limit per Joke):</h2>
+                <div id="time-options" class="grid grid-cols-3 gap-4">
+                    <!-- Buttons will be generated here -->
+                </div>
+            </div>
+
+            <!-- Level Selection -->
+            <div class="mb-10">
+                <!-- MODIFIED LINE: Removed "(... 100 Questions Each)" -->
+                <h2 class="text-2xl font-bold mb-4" style="color: var(--accent-color);">கடின நிலை (Difficulty Level):</h2>
+                <div id="level-options" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Buttons will be generated here -->
+                </div>
+            </div>
+
+            <!-- Start Button -->
+            <button id="start-game-button" onclick="startGame()" disabled class="button-style w-full bg-gray-500 cursor-not-allowed text-white font-extrabold py-4 rounded-xl text-2xl opacity-70">
+                விளையாடத் தொடங்கு (Start Game)
+            </button>
+        </div>
+
+        <!-- --- Game Screen --- -->
+        <div id="game-screen" class="screen hidden">
+            <!-- Score & Timer Display -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-xl font-bold text-green-400">ஸ்கோர்: <span id="score-display">0</span></div>
+                <div class="text-xl font-bold text-red-400">நேரம்: <span id="timer-display">0</span> வினாடிகள்</div>
+            </div>
+            
+            <!-- Timer Bar -->
+            <div id="timer-bar-container" class="mb-6 rounded-lg">
+                <div id="timer-bar" class="rounded-lg"></div>
+            </div>
+            
+            <!-- Joke Display Area -->
+            <div class="joke-container p-6 rounded-lg mb-6 min-h-[160px] flex flex-col justify-center relative shadow-inner">
+                
+                <p class="font-bold text-xl mb-3" style="color: var(--accent-color);">நிலை: <span id="level-indicator" class="text-yellow-300"></span></p>
+                <p id="joke-question" class="text-2xl leading-relaxed" style="color: var(--text-color);">
+                    <!-- Joke question goes here -->
+                </p>
+            </div>
+
+            <!-- Options Container -->
+            <div id="options-container" class="grid grid-cols-1 gap-3">
+                <!-- Option buttons will be generated here -->
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6 gap-4">
+                <button id="prev-button" onclick="goToPreviousJoke()" disabled class="nav-button-style text-white font-extrabold py-3 rounded-xl text-lg w-1/2 disabled-nav">
+                    ← முந்தைய கேள்வி
+                </button>
+                <button id="next-button" onclick="goToNextJoke()" class="nav-button-style bg-orange-600 hover:bg-orange-700 text-white font-extrabold py-3 rounded-xl text-lg w-1/2">
+                    அடுத்த கேள்வி →
+                </button>
+            </div>
+        </div>
+
+        <!-- --- End Screen --- -->
+        <div id="end-screen" class="screen hidden text-center">
+            <h2 class="text-4xl font-extrabold text-red-400 mb-6">விளையாட்டு முடிந்தது!</h2>
+            <p class="text-2xl mb-8" style="color: var(--text-color);">நீங்கள் பெற்ற மொத்த ஸ்கோர்:</p>
+            <p id="final-score-display" class="text-7xl font-black text-yellow-400 mb-10">0</p>
+            <button onclick="window.location.reload()" class="button-style w-full bg-orange-600 hover:bg-orange-700 text-white font-extrabold py-4 rounded-xl text-2xl">
+                மீண்டும் தொடங்கு (Restart Game)
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Base set of Kadi Jokes (approximately 10 per level)
+        const BASE_JOKES = [
+            // Easy - Simple wordplay, obvious answers
+            { q: "எது பண்ணினாலும் சத்தம் போட முடியாத விஷயம் எது?", a: "தூங்குறது", level: "Easy" },
+            { q: "பார்க்க ஒரு கண் இருக்கும், ஆனால் அது மனுஷன் இல்லை. அது என்ன?", a: "ஊசி", level: "Easy" },
+            { q: "எந்த ஒரு உயிரினத்துக்கு இரண்டு கைகள் இருந்தாலும், எழுத முடியாது?", a: "கைக்குட்டை", level: "Easy" },
+            { q: "வெட்ட வெட்ட வளரும், அது என்ன?", a: "தலைமுடி", level: "Easy" },
+            { q: "எதை கீழே போட்டால் மேலே எழும்பும்?", a: "பந்து", level: "Easy" },
+            { q: "பல்லு இருந்தாலும் சாப்பிட முடியாது, அது என்ன?", a: "சீப்பு", level: "Easy" },
+            { q: "எந்த ஒரு அறைக்கு கதவும் இல்லை, ஜன்னலும் இல்லை?", a: "காற்றறை", level: "Easy" },
+            { q: "உள்ளே செல்லும்போது சிவப்பு, வெளியே வரும்போது வெள்ளை. அது என்ன?", a: "சூயிங்கம்", level: "Easy" },
+            { q: "எந்த ஒரு 'மா'வை சாப்பிட முடியாது?", a: "மகிழ்ச்சி", level: "Easy" },
+            { q: "எந்த ஒரு 'காய்'யை வேகவைத்து சாப்பிட முடியாது?", a: "காய்கறி கடை", level: "Easy" },
+            
+            // Intermediate - Standard kadi jokes, average lateral thinking
+            { q: "நானும் இல்லை, நீயும் இல்லை. அப்புறம் யாரு அந்த குழந்தைக்கு அப்பா?", a: "அந்த குழந்தையோட அப்பா", level: "Intermediate" },
+            { q: "எந்த ஒரு கடல் உள்ளே ஒரு துளி தண்ணீர் கூட இல்லை?", a: "வானத்து கடல்", level: "Intermediate" },
+            { q: "உடைந்தால் மட்டுமே வேலை செய்யும் பொருள் என்ன?", a: "முட்டை", level: "Intermediate" },
+            { q: "உனக்கு மட்டுமே சொந்தமான, ஆனால் மற்றவர்கள் அதை அதிகம் பயன்படுத்தும் பொருள் எது?", a: "உங்கள் பெயர்", level: "Intermediate" },
+            { q: "எப்போதும் முன்னே போகும், ஆனால் திரும்பி பார்க்காது?", a: "நேரம்", level: "Intermediate" },
+            { q: "எந்த ஒரு சாவிக்கு பூட்டு இல்லை?", a: "சாவிக்காரன்", level: "Intermediate" },
+            { q: "எந்த ஒரு பொத்தான் (Button) சட்டையில் இருக்காது?", a: "சுவிட்ச்", level: "Intermediate" },
+            { q: "எந்த ஒரு 'கை'யால் தட்ட முடியாது?", a: "கைதி", level: "Intermediate" },
+            { q: "எந்த ஒரு 'பட்டி'யை சட்டைக்கு போட முடியாது?", a: "ரயில்வே பட்டி", level: "Intermediate" },
+            { q: "நான் எப்போதும் குளிர்ச்சியாக இருக்கிறேன், ஆனால் யாரும் என்னை குடிக்க முடியாது. நான் என்ன?", a: "குளிர் சாதனப் பெட்டி", level: "Intermediate" },
+
+            // Hard - More obscure, requires deeper word association
+            { q: "வாழ்க்கை முழுவதும் உன்னுடன் இருக்கும், ஆனால் உனக்காக ஒரு வார்த்தை கூட பேசாது. அது என்ன?", a: "நிழல்", level: "Hard" },
+            { q: "நான் எப்போதும் பசியோடு இருக்கிறேன், என்னை எரிக்காதவரை நான் எதையும் தொடமாட்டேன். நான் என்ன?", a: "நெருப்பு", level: "Hard" },
+            { q: "எதை கழுவினாலும் அழுக்காக இருக்கும்?", a: "கரி", level: "Hard" },
+            { q: "எந்த ஒரு 'மை'யால் எழுத முடியாது?", a: "மயில்", level: "Hard" },
+            { q: "எந்த ஒரு 'கம்'மை ஒட்ட முடியாது?", a: "சுகர் கம்", level: "Hard" },
+            { q: "உடை இல்லாமல் நடக்க முடியும், அது என்ன?", a: "கண்ணாடி", level: "Hard" },
+            { q: "நான் எப்போதுமே ஈரமாக இருக்கிறேன். நான் என்ன?", a: "நாக்கு", level: "Hard" },
+            { q: "எந்த ஒரு 'நதி'க்கு தண்ணீர் இருக்காது?", a: "நதி நீர் ஆணையம்", level: "Hard" },
+            { q: "நான் அழுக்காக இருந்தால், நான் வெள்ளையாகிறேன். நான் என்ன?", a: "கரும்பலகை", level: "Hard" },
+            { q: "எந்த ஒரு 'கனி'யை வேகவைத்து சாப்பிட முடியாது?", a: "கணிதம்", level: "Hard" },
+            
+            // Impossible - The most difficult, highly specific wordplay
+            { q: "எந்த ஒரு 'மாலை'யை அணிந்தால் கழுத்து வலிக்காது?", a: "வானம்", level: "Impossible" },
+            { q: "எந்த ஒரு 'தலை'க்கு முடி இருக்காது?", a: "தலைப்பாகை", level: "Impossible" },
+            { q: "யார் எப்போதுமே கேள்விகளைக் கேட்பார், ஆனால் ஒருபோதும் பதிலளிக்க மாட்டார்?", a: "தொலைபேசி", level: "Impossible" },
+            { q: "எந்த ஒரு 'வேலை'க்கு சம்பளம் தர மாட்டார்கள்?", a: "வீட்டு வேலை", level: "Impossible" },
+            { q: "எந்த ஒரு 'பெட்டி'க்குள்ளேயும் எதுவும் இருக்காது?", a: "சவப்பெட்டி", level: "Impossible" },
+            { q: "எந்த ஒரு 'மீன்'னுக்கு நீச்சல் தெரியாது?", a: "மீன் குழம்பு", level: "Impossible" },
+            { q: "எந்த ஒரு 'பழம்'மை பறிக்க முடியாது?", a: "பழைய கதை", level: "Impossible" },
+            { q: "எந்த ஒரு 'உடை'யை கிழிக்க முடியாது?", a: "உடன்பாடு", level: "Impossible" },
+            { q: "எந்த ஒரு 'மலை'யை ஏற முடியாது?", a: "விளம்பர மலை", level: "Impossible" },
+            { q: "எந்த ஒரு 'குரங்கு' மரத்தில் தொங்காது?", a: "குரங்குப் பிடி", level: "Impossible" }
+        ];
+
+        // Function to ensure exactly 100 jokes per level by duplication (as requested)
+        const REQUIRED_COUNT = 100;
+        function padJokes(jokes) {
+            const paddedJokes = [];
+            const groupedJokes = {};
+
+            jokes.forEach(joke => {
+                if (!groupedJokes[joke.level]) groupedJokes[joke.level] = [];
+                groupedJokes[joke.level].push(joke);
+            });
+
+            for (const level in groupedJokes) {
+                let currentJokes = groupedJokes[level];
+                if (currentJokes.length > 0) {
+                    let index = 0;
+                    while (paddedJokes.filter(j => j.level === level).length < REQUIRED_COUNT) {
+                        const originalJoke = currentJokes[index % currentJokes.length];
+                        
+                        const qNum = paddedJokes.filter(j => j.level === level).length + 1;
+                        const qSuffix = index >= currentJokes.length ? ` (Q${qNum})` : '';
+
+                        paddedJokes.push({ 
+                            ...originalJoke,
+                            q: originalJoke.q + qSuffix, 
+                        });
+                        index++;
+                    }
+                }
+            }
+            return paddedJokes;
+        }
+
+        const ALL_JOKES = padJokes(BASE_JOKES);
+
+
+        // --- Game State Variables ---
+        let score = 0;
+        let selectedTime = null; 
+        let selectedLevel = null;
+        let filteredJokes = []; 
+        let currentJokeIndex = 0;
+        let timerInterval = null;
+        let timeLeft = 0;
+        let isDarkMode = true; // Tracks the current theme mode
+
+        // --- UI Element References ---
+        const body = document.body;
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startGameButton = document.getElementById('start-game-button');
+        const timeOptionsContainer = document.getElementById('time-options');
+        const levelOptionsContainer = document.getElementById('level-options');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerBar = document.getElementById('timer-bar');
+        const questionEl = document.getElementById('joke-question');
+        const optionsContainer = document.getElementById('options-container');
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const levelIndicator = document.getElementById('level-indicator');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        
+        // --- Theme Toggle Function ---
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                body.setAttribute('data-theme', 'dark');
+                darkModeToggle.textContent = '🌙';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                darkModeToggle.textContent = '☀️';
+            }
+            // Re-render timer bar color based on new theme
+            updateTimerBarColor();
+        }
+
+        function updateTimerBarColor(percentage = 100) {
+            const bar = document.getElementById('timer-bar');
+            
+            // Set initial color based on theme
+            let initialColor = isDarkMode ? '#10b981' : '#1d4ed8'; // Green (Dark) or Blue (Light)
+            
+            if (percentage <= 25) {
+                initialColor = isDarkMode ? '#ef4444' : '#b91c1c'; // Red (Dark) or Dark Red (Light)
+            } else if (percentage <= 50) {
+                initialColor = isDarkMode ? '#f59e0b' : '#d97706'; // Amber (Dark) or Dark Amber (Light)
+            }
+            
+            bar.style.backgroundColor = initialColor;
+        }
+        
+        // --- Game Setup Functions ---
+
+        const TIME_OPTIONS = [10, 15, 20, 25, 30];
+        const LEVEL_OPTIONS = ["Easy", "Intermediate", "Hard", "Impossible"];
+
+        function showScreen(screenId) {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function toggleStartButton() {
+            if (selectedTime !== null && selectedLevel !== null) {
+                startGameButton.disabled = false;
+                startGameButton.classList.remove('bg-gray-500', 'cursor-not-allowed', 'opacity-70');
+                startGameButton.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            } else {
+                startGameButton.disabled = true;
+                startGameButton.classList.add('bg-gray-500', 'cursor-not-allowed', 'opacity-70');
+                startGameButton.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
+
+        function createSelectionButtons() {
+            // Time Buttons
+            TIME_OPTIONS.forEach(time => {
+                const button = document.createElement('button');
+                button.textContent = `${time} வினாடிகள்`;
+                // Note: Using explicit color class here since variable usage for button color in this structure is complex with Tailwind
+                button.className = 'time-button button-style bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg';
+                button.onclick = () => {
+                    selectedTime = time;
+                    document.querySelectorAll('.time-button').forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    toggleStartButton();
+                };
+                timeOptionsContainer.appendChild(button);
+            });
+
+            // Level Buttons
+            const levelColors = {
+                "Easy": "bg-green-500 hover:bg-green-600",
+                "Intermediate": "bg-yellow-500 hover:bg-yellow-600",
+                "Hard": "bg-red-500 hover:bg-red-600",
+                "Impossible": "bg-purple-500 hover:bg-purple-600"
+            };
+            LEVEL_OPTIONS.forEach(level => {
+                const button = document.createElement('button');
+                button.textContent = level;
+                button.className = `level-button button-style ${levelColors[level]} text-white py-3 rounded-lg text-lg`;
+                button.onclick = () => {
+                    selectedLevel = level;
+                    document.querySelectorAll('.level-button').forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    toggleStartButton();
+                };
+                levelOptionsContainer.appendChild(button);
+            });
+        }
+
+        // --- Game Logic ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startGame() {
+            if (selectedTime === null || selectedLevel === null) return;
+
+            // 1. Filter, Initialize State, and Shuffle Jokes
+            filteredJokes = ALL_JOKES.filter(joke => joke.level === selectedLevel)
+                .map(joke => ({
+                    ...joke,
+                    isAnswered: false, 
+                    isCorrect: false,  
+                    selectedOption: null 
+                }));
+            shuffleArray(filteredJokes);
+
+            if (filteredJokes.length === 0) {
+                questionEl.textContent = "இந்த நிலையில் விடுகதைகள் இல்லை. வேறு நிலையைத் தேர்ந்தெடுக்கவும்.";
+                return;
+            }
+
+            // 2. Initialize State
+            score = 0;
+            currentJokeIndex = 0;
+            scoreDisplay.textContent = score;
+            levelIndicator.textContent = selectedLevel;
+
+            // 3. Show Game Screen and Load First Joke
+            showScreen('game-screen');
+            loadJoke();
+        }
+        
+        // --- Navigation Handlers ---
+
+        function goToPreviousJoke() {
+            if (currentJokeIndex > 0) {
+                currentJokeIndex--;
+                loadJoke();
+            }
+        }
+
+        function goToNextJoke() {
+            const currentJoke = filteredJokes[currentJokeIndex];
+            
+            if (currentJokeIndex < filteredJokes.length - 1) {
+                currentJokeIndex++;
+                loadJoke();
+            } else if (currentJokeIndex === filteredJokes.length - 1 && currentJoke.isAnswered) {
+                // If on the last question and answered, go to End Screen
+                endGame();
+            }
+        }
+
+        function updateNavigationButtons() {
+            const totalJokes = filteredJokes.length;
+            const currentJoke = filteredJokes[currentJokeIndex];
+            const isLastQuestion = currentJokeIndex === totalJokes - 1;
+
+            // Previous Button logic
+            prevButton.disabled = currentJokeIndex === 0;
+            if (currentJokeIndex === 0) {
+                prevButton.classList.add('disabled-nav');
+            } else {
+                 prevButton.classList.remove('disabled-nav');
+            }
+
+            // Next Button logic
+            if (isLastQuestion) {
+                if(currentJoke.isAnswered) {
+                     nextButton.textContent = "விளையாட்டை முடி";
+                     nextButton.onclick = endGame;
+                     nextButton.classList.remove('disabled-nav');
+                } else {
+                    nextButton.textContent = "விளையாட்டை முடி";
+                    nextButton.onclick = endGame;
+                    nextButton.classList.add('disabled-nav');
+                    nextButton.disabled = true;
+                }
+            } else {
+                nextButton.textContent = "அடுத்த கேள்வி →";
+                nextButton.onclick = goToNextJoke;
+                nextButton.classList.remove('disabled-nav');
+                nextButton.disabled = false;
+            }
+        }
+
+
+        // --- Timer Logic ---
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = selectedTime;
+            timerDisplay.textContent = timeLeft;
+            timerBar.style.display = 'block'; 
+            
+            updateTimerBarColor(100); 
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                
+                // Update Timer Bar width and color
+                const percentage = (timeLeft / selectedTime) * 100;
+                timerBar.style.width = `${percentage}%`;
+                updateTimerBarColor(percentage);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout(); 
+                }
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            const currentJoke = filteredJokes[currentJokeIndex];
+            
+            currentJoke.isAnswered = true;
+            currentJoke.isCorrect = false;
+            currentJoke.selectedOption = "நேரம் முடிந்தது"; 
+
+            // Disable all options and highlight correct answer in yellow
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-gray-600');
+                
+                if (btn.getAttribute('data-answer') === currentJoke.a) { 
+                    btn.classList.remove('bg-gray-700');
+                    // Use theme-neutral yellow/orange for timeout reveal
+                    btn.classList.add('bg-yellow-600', 'border-4', 'border-yellow-300'); 
+                }
+            });
+
+            const cleanAnswer = currentJoke.a.replace(/ \(Q\d+\)/, '');
+            questionEl.textContent = `நேரம் முடிந்தது! சரியான விடை: ${cleanAnswer}`;
+            updateNavigationButtons();
+        }
+
+        // --- Option Rendering and Selection ---
+
+        function getDistractors(correctAnswer, level) {
+            const uniqueAnswers = Array.from(new Set(ALL_JOKES
+                .filter(j => j.level === level && j.a !== correctAnswer) 
+                .map(j => j.a)));
+            
+            shuffleArray(uniqueAnswers);
+
+            const distractors = uniqueAnswers.slice(0, 3);
+            while (distractors.length < 3) {
+                distractors.push(`விடை`);
+            }
+            return distractors;
+        }
+
+
+        function renderOptions(joke) {
+            optionsContainer.innerHTML = '';
+            const { a: correctAnswer, level, isAnswered, selectedOption, isCorrect } = joke;
+
+            // Render options only if needed, otherwise use saved options if possible
+            const distractors = getDistractors(correctAnswer, level);
+            const options = [correctAnswer, ...distractors];
+            shuffleArray(options); // Shuffle on every load
+
+            options.forEach((option) => {
+                const button = document.createElement('button');
+                button.textContent = option.replace(/ \(Q\d+\)/, ''); 
+                button.setAttribute('data-answer', option); 
+                
+                // Use style for background color to allow theme changes to affect button text on select
+                button.className = `option-button button-style bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg text-lg text-left w-full shadow-md`;
+                button.onclick = () => selectOption(option, button);
+                
+                if (isAnswered) {
+                    button.disabled = true;
+                    button.classList.remove('hover:bg-gray-600');
+                    
+                    if (option === correctAnswer) {
+                        // Correct: Green highlight (theme-independent)
+                        button.classList.remove('bg-gray-700');
+                        button.classList.add('bg-green-600', 'border-4', 'border-lime-300');
+                    } else if (option === selectedOption && !isCorrect && selectedOption !== "நேரம் முடிந்தது") {
+                        // Incorrect selection: Red highlight (theme-independent)
+                        button.classList.remove('bg-gray-700');
+                        button.classList.add('bg-red-600', 'border-4', 'border-red-300');
+                    } else if (selectedOption === "நேரம் முடிந்தது" && option === correctAnswer) {
+                        // Timeout: Yellow/Orange highlight (theme-independent)
+                         button.classList.remove('bg-gray-700');
+                         button.classList.add('bg-yellow-600', 'border-4', 'border-yellow-300');
+                    }
+                }
+                
+                optionsContainer.appendChild(button);
+            });
+        }
+
+
+        function selectOption(selectedAnswer, selectedButton) {
+            clearInterval(timerInterval);
+            const currentJoke = filteredJokes[currentJokeIndex];
+            const isCorrect = selectedAnswer === currentJoke.a;
+
+            // 1. Save state
+            if (!currentJoke.isAnswered) { // Only update score/state if answering for the first time
+                currentJoke.isAnswered = true;
+                currentJoke.isCorrect = isCorrect;
+                currentJoke.selectedOption = selectedAnswer;
+            
+                if (isCorrect) {
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                }
+            }
+
+
+            // 2. Highlighting 
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-gray-600');
+                
+                if (btn.getAttribute('data-answer') === currentJoke.a) {
+                    btn.classList.remove('bg-gray-700');
+                    btn.classList.add('bg-green-600', 'border-4', 'border-lime-300');
+                } else if (btn === selectedButton) {
+                    btn.classList.remove('bg-gray-700');
+                    btn.classList.add('bg-red-600', 'border-4', 'border-red-300');
+                }
+            });
+
+            // 3. Update Message
+            const cleanAnswer = currentJoke.a.replace(/ \(Q\d+\)/, '');
+            if (isCorrect) {
+                questionEl.textContent = `சரியான விடை! (${cleanAnswer}) - +10 ஸ்கோர்!`;
+            } else {
+                questionEl.textContent = `தவறான விடை. சரியான விடை: ${cleanAnswer}`;
+            }
+            
+            // 4. Update Navigation Buttons
+            updateNavigationButtons();
+        }
+
+        // --- Main Loader ---
+
+        function loadJoke() {
+            if (currentJokeIndex >= filteredJokes.length) {
+                endGame();
+                return;
+            }
+
+            const joke = filteredJokes[currentJokeIndex];
+            
+            // 1. Clear Timer & Update Bar Display
+            clearInterval(timerInterval);
+            timerDisplay.textContent = selectedTime;
+            
+            // 2. Update content
+            const cleanQuestion = joke.q.replace(/ \(Q\d+\)$/, '');
+            // Display Question Number in the question text
+            questionEl.textContent = `${currentJokeIndex + 1} / ${filteredJokes.length}: ${cleanQuestion}`;
+            
+            // 3. Render Options & State Check
+            renderOptions(joke);
+            
+            // 4. Update Navigation
+            updateNavigationButtons();
+            
+            // 5. Start Timer ONLY if not answered
+            if (!joke.isAnswered) {
+                timerBar.style.display = 'block';
+                startTimer();
+            } else {
+                // If already answered, hide the timer bar and show status
+                timerBar.style.display = 'none';
+                const cleanAnswer = joke.a.replace(/ \(Q\d+\)/, '');
+                if (joke.selectedOption === "நேரம் முடிந்தது") {
+                    questionEl.textContent = `நேரம் முடிந்தது. சரியான விடை: ${cleanAnswer}`;
+                } else if (joke.isCorrect) {
+                    questionEl.textContent = `சரியான விடை! (${cleanAnswer})`;
+                } else {
+                    questionEl.textContent = `தவறான விடை. சரியான விடை: ${cleanAnswer}`;
+                }
+            }
+        }
+
+
+        function endGame() {
+            clearInterval(timerInterval);
+            finalScoreDisplay.textContent = score;
+            showScreen('end-screen');
+        }
+
+        // --- Initialization ---
+        window.onload = () => {
+            // Initialize theme to dark mode (default)
+            toggleDarkMode(); 
+            isDarkMode = false; // Toggle will set it back to true, so start false here
+
+            createSelectionButtons();
+            showScreen('start-screen');
+        };
+    </script>
+</body>
+</html>
