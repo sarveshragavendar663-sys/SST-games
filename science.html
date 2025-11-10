@@ -1,1 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Sphere - The Knowledge Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define the repeating background pattern using SVG Data URI */
+        /* Background includes a subtle grid and repeating sparkle emojis ✨ */
+        .emoji-pattern-bg {
+            background-color: #0d0d1a; /* Very dark background */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" fill="%230d0d1a"/><path d="M 0 0 L 32 0 M 0 16 L 32 16 M 0 32 L 32 32 M 0 0 L 0 32 M 16 0 L 16 32 M 32 0 L 32 32" stroke="%231a1a33" stroke-width="0.5"/><text x="16" y="16" font-size="8" fill="%236b21a8" opacity="0.5" font-family="sans-serif" text-anchor="middle">✨</text><text x="0" y="0" font-size="8" fill="%236b21a8" opacity="0.3" font-family="sans-serif">🚀</text><text x="32" y="32" font-size="8" fill="%236b21a8" opacity="0.4" font-family="sans-serif" text-anchor="end">🧠</text></svg>');
+            background-repeat: repeat;
+        }
 
+        /* Retro/Cyberpunk Font and Colors */
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            color: #d1d5db; /* Light gray base text */
+        }
+
+        .sphere-card {
+            background-color: #1a1a33; /* Darker card background */
+            border: 3px solid #6b21a8; /* Magenta/Purple border */
+            border-radius: 1.5rem;
+            box-shadow: 0 0 25px rgba(107, 33, 168, 0.7); /* Outer glow */
+            padding: 2rem;
+        }
+
+        .neon-title {
+            color: #10b981; /* Neon Green */
+            text-shadow: 0 0 5px #10b981, 0 0 10px #10b981;
+        }
+
+        .sub-title {
+            color: #a78bfa; /* Neon Purple */
+        }
+
+        .neon-button, .option-button {
+            border: 2px solid #6b21a8;
+            background-color: #3f1a5f; /* Dark button background */
+            color: #d1d5db;
+            transition: all 0.15s;
+            box-shadow: 0 0 8px rgba(107, 33, 168, 0.5);
+        }
+
+        .neon-button:hover:not([disabled]), .option-button:hover:not([disabled]) {
+            background-color: #581c87;
+            box-shadow: 0 0 15px #a78bfa;
+            transform: translateY(-1px);
+        }
+
+        /* Active/Selected button style */
+        .selected-button {
+            background-color: #10b981 !important;
+            color: #0d0d1a !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 15px #10b981 !important;
+        }
+
+        /* Quiz specific colors */
+        .correct {
+            background-color: #10b981 !important;
+            color: #0d0d1a !important;
+            border-color: #064e3b !important;
+        }
+        .incorrect {
+            background-color: #ef4444 !important;
+            color: #0d0d1a !important;
+            border-color: #7f1d1d !important;
+        }
+
+        /* Timer Bar */
+        #timerBar {
+            height: 10px;
+            background-color: #4a4a5c;
+            border-radius: 5px;
+        }
+        #timerProgress {
+            background-color: #10b981; /* Green bar */
+            height: 100%;
+            border-radius: 5px;
+            transition: width linear; /* Smooth transition */
+        }
+
+        .footer-text {
+            color: #a78bfa;
+            text-shadow: 0 0 5px rgba(167, 139, 250, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center py-8 px-4 emoji-pattern-bg">
+    <div class="sphere-card w-full sm:max-w-xl mb-4">
+        <h1 class="text-4xl font-bold text-center neon-title mb-2">Science Sphere 💡</h1>
+        <p class="text-xl text-center sub-title mb-10">The Timed Knowledge Test ⏱️</p>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="space-y-8">
+            <div class="text-center">
+                <h3 class="text-lg mb-4 sub-title font-semibold">
+                    <span class="status-icon">🚀</span> SELECT YOUR CHALLENGE LEVEL
+                </h3>
+                <div id="levelOptions" class="grid grid-cols-3 gap-3">
+                    <button class="neon-button py-3 rounded-lg" data-level="Easy" data-qcount="10" onclick="selectLevel(this)">EASY (10 Qs) 😄</button>
+                    <button class="neon-button py-3 rounded-lg" data-level="Medium" data-qcount="30" onclick="selectLevel(this)">MEDIUM (30 Qs) 🤔</button>
+                    <button class="neon-button py-3 rounded-lg" data-level="Hard" data-qcount="60" onclick="selectLevel(this)">HARD (60 Qs) 🤯</button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <h3 class="text-lg mb-4 sub-title font-semibold">
+                    <span class="status-icon">⏳</span> SELECT TIME PER QUESTION (SECONDS)
+                </h3>
+                <div id="timeOptions" class="grid grid-cols-4 gap-3">
+                    <button class="neon-button py-3 rounded-lg" data-time="15" onclick="selectTime(this)">15S ⚡</button>
+                    <button class="neon-button py-3 rounded-lg" data-time="30" onclick="selectTime(this)">30S 💨</button>
+                    <button class="neon-button py-3 rounded-lg" data-time="45" onclick="selectTime(this)">45S 🐢</button>
+                    <button class="neon-button py-3 rounded-lg" data-time="60" onclick="selectTime(this)">60S 🌳</button>
+                </div>
+            </div>
+
+            <button id="startButton" onclick="startChallenge()" disabled class="w-full neon-button py-4 rounded-lg bg-green-700/50 text-xl font-bold disabled:bg-gray-700 disabled:shadow-none disabled:border-gray-600 disabled:text-gray-400">
+                START CHALLENGE ⚔️
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden">
+            <div class="mb-6 space-y-3">
+                <div class="flex justify-between text-sm sub-title">
+                    <span id="levelDisplay">LEVEL: UNKNOWN ❓</span>
+                    <span id="timerDisplay">TIME: 0s ⏳</span>
+                </div>
+                <div id="timerBar"><div id="timerProgress"></div></div>
+            </div>
+
+            <div id="questionContainer" class="min-h-[120px] mb-6 border-b border-gray-600 pb-4">
+                <p id="questionText" class="text-lg text-gray-200 leading-relaxed"></p>
+            </div>
+
+            <div id="optionsContainer" class="space-y-3">
+                <!-- Options buttons will be inserted here -->
+            </div>
+
+            <div class="mt-8 flex justify-between items-center h-10">
+                <p id="feedbackMessage" class="text-sm neon-title"></p>
+                <!-- This button is only shown if the user answers before time runs out -->
+                <button id="nextButton" onclick="nextQuestion()" disabled class="neon-button py-2 px-6 rounded-lg disabled:opacity-50">
+                    NEXT >> ⏭️
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="resultScreen" class="hidden text-center p-8">
+            <h2 class="text-3xl font-bold neon-title mb-4">CHALLENGE COMPLETE 🎉</h2>
+            <p class="text-xl sub-title mb-6">Level: <span id="finalLevel"></span> | Questions: <span id="finalQCount"></span></p>
+            <p class="text-5xl font-extrabold mb-8 neon-title">SCORE: <span id="finalScore" class="text-red-400"></span></p>
+            <button onclick="resetQuiz()" class="w-full neon-button py-3 rounded-lg bg-indigo-700/50 text-lg font-bold">
+                RESTART SPHERE 🔁
+            </button>
+        </div>
+    </div>
+    
+    <!-- FOOTER -->
+    <footer class="mt-4 text-center">
+        <p class="text-xs footer-text">
+            Developed and Designed By Sarvesh Ragavendar (G7A) 🖥️
+        </p>
+    </footer>
+
+    <script type="text/javascript">
+        // --- EXPANDED QUESTION BANK (300 QUESTIONS) ---
+        // Using the comprehensive list of 300 science questions from the previous step.
+        const allQuestions = {
+            'Easy': [
+                { question: "What is the primary element found in the sun?", options: ["Oxygen", "Carbon", "Helium", "Hydrogen"], answer: "Hydrogen" },
+                { question: "What unit is used to measure electrical current?", options: ["Volt", "Ohm", "Watt", "Ampere"], answer: "Ampere" },
+                { question: "What is the largest organ in the human body?", options: ["Heart", "Brain", "Liver", "Skin"], answer: "Skin" },
+                { question: "How many bones are in the adult human body?", options: ["206", "150", "300", "260"], answer: "206" },
+                { question: "What is H₂O commonly known as?", options: ["Salt", "Air", "Water", "Sugar"], answer: "Water" },
+                { question: "What planet is known as the 'Red Planet'?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: "Mars" },
+                { question: "What is the process of liquid turning into gas?", options: ["Condensation", "Melting", "Sublimation", "Evaporation"], answer: "Evaporation" },
+                { question: "Which force pulls objects towards the Earth's center?", options: ["Magnetism", "Friction", "Tension", "Gravity"], answer: "Gravity" },
+                { question: "What gas do plants primarily absorb from the atmosphere?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: "Carbon Dioxide" },
+                { question: "Which animal group does a whale belong to?", options: ["Fish", "Reptile", "Amphibian", "Mammal"], answer: "Mammal" },
+                { question: "What is the chemical symbol for Gold?", options: ["Gd", "Ag", "Au", "Go"], answer: "Au" },
+                { question: "What object orbits the Earth?", options: ["Sun", "Mars", "The Moon", "Venus"], answer: "The Moon" },
+                { question: "What is the freezing point of water in Celsius?", options: ["10°C", "0°C", "-10°C", "100°C"], answer: "0°C" },
+                { question: "What is the smallest unit of matter?", options: ["Molecule", "Cell", "Compound", "Atom"], answer: "Atom" },
+                { question: "Which type of blood vessel carries blood away from the heart?", options: ["Veins", "Capillaries", "Arteries", "Nerves"], answer: "Arteries" },
+                { question: "What colour is the sky on a clear day?", options: ["Green", "Yellow", "Blue", "Red"], answer: "Blue" },
+                { question: "What is a baby dog called?", options: ["Kitten", "Calf", "Pup", "Kid"], answer: "Pup" },
+                { question: "How many sides does a triangle have?", options: ["Two", "Three", "Four", "Five"], answer: "Three" },
+                { question: "Which sense organ is responsible for sight?", options: ["Ears", "Nose", "Tongue", "Eyes"], answer: "Eyes" },
+                { question: "What is the term for a scientist who studies rocks?", options: ["Biologist", "Chemist", "Geologist", "Meteorologist"], answer: "Geologist" },
+                { question: "What energy source is produced by the movement of air?", options: ["Solar", "Hydro", "Geothermal", "Wind"], answer: "Wind" },
+                { question: "What is the central part of an atom called?", options: ["Electron", "Proton", "Neutron", "Nucleus", "Core"], answer: "Nucleus" },
+                { question: "Which state of matter has a definite volume but no definite shape?", options: ["Solid", "Gas", "Plasma", "Liquid"], answer: "Liquid" },
+                { question: "What is the common name for Sodium Chloride (NaCl)?", options: ["Baking Soda", "Vinegar", "Table Salt", "Sugar"], answer: "Table Salt" },
+                { question: "Which part of the cell controls its activities?", options: ["Mitochondria", "Cytoplasm", "Cell Wall", "Nucleus"], answer: "Nucleus" },
+                { question: "What phenomenon causes the seasons on Earth?", options: ["Moon phases", "Earth's tilt", "Solar flares", "Tides"], answer: "Earth's tilt" },
+                { question: "What is the unit of power?", options: ["Joule", "Newton", "Volt", "Watt"], answer: "Watt" },
+                { question: "Which gas makes up the majority of the Earth's atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Argon", "Nitrogen"], answer: "Nitrogen" },
+                { question: "What is the chemical symbol for Iron?", options: ["Ir", "In", "Fe", "I"], answer: "Fe" },
+                { question: "What type of light does a rainbow display?", options: ["Infrared", "Ultraviolet", "Spectrum", "X-rays"], answer: "Spectrum" },
+                { question: "What metal is liquid at room temperature?", options: ["Gold", "Silver", "Mercury", "Lead"], answer: "Mercury" },
+                { question: "What is measured in light-years?", options: ["Time", "Weight", "Distance", "Speed"], answer: "Distance" },
+                { question: "Which gas do humans breathe out?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Helium"], answer: "Carbon Dioxide" },
+                { question: "The process of a solid turning directly into a gas is called what?", options: ["Melting", "Sublimation", "Vaporization", "Condensation"], answer: "Sublimation" },
+                { question: "What is the closest planet to the sun?", options: ["Earth", "Venus", "Mars", "Mercury"], answer: "Mercury" },
+                { question: "What is the basic food-making process in plants?", options: ["Respiration", "Digestion", "Photosynthesis", "Germination"], answer: "Photosynthesis" },
+                { question: "What number represents neutral pH?", options: ["1", "7", "14", "10"], answer: "7" },
+                { question: "What is the protective layer around the Earth that shields us from solar radiation?", options: ["Troposphere", "Ionosphere", "Exosphere", "Ozone layer"], answer: "Ozone layer" },
+                { question: "What kind of energy is stored in a battery?", options: ["Thermal", "Kinetic", "Chemical", "Electrical"], answer: "Chemical" },
+                { question: "What is the study of living organisms called?", options: ["Physics", "Geology", "Chemistry", "Biology"], answer: "Biology" },
+                { question: "What colour light is absorbed the least by plants during photosynthesis?", options: ["Red", "Blue", "Green", "Yellow"], answer: "Green" },
+                { question: "Which unit measures the loudness of sound?", options: ["Hertz", "Volt", "Decibel", "Ohm"], answer: "Decibel" },
+                { question: "What type of rock is formed from cooling magma or lava?", options: ["Sedimentary", "Metamorphic", "Igneous", "Fossil"], answer: "Igneous" },
+                { question: "Which vitamin is synthesized by the skin when exposed to sunlight?", options: ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin K"], answer: "Vitamin D" },
+                { question: "What is the force resisting the relative motion of solid surfaces, fluid layers, and material elements sliding against each other?", options: ["Tension", "Torque", "Friction", "Gravity"], answer: "Friction" },
+                { question: "What is the outermost layer of the Earth called?", options: ["Mantle", "Outer Core", "Inner Core", "Crust"], answer: "Crust" },
+                { question: "What is the smallest planet in our solar system?", options: ["Mars", "Venus", "Mercury", "Earth"], answer: "Mercury" },
+                { question: "What kind of reaction produces heat?", options: ["Endothermic", "Catalytic", "Exothermic", "Isothermal"], answer: "Exothermic" },
+                { question: "Where is the body's control center, the brain, located?", options: ["Chest", "Abdomen", "Head", "Spine"], answer: "Head" },
+                { question: "What does the abbreviation DNA stand for?", options: ["Deoxyribonucleic Acid", "Double Nitrogen Atom", "Dynamic Nucleic Acid", "Digital Networking Aid"], answer: "Deoxyribonucleic Acid" },
+                { question: "In which season do trees usually lose their leaves?", options: ["Spring", "Summer", "Autumn (Fall)", "Winter"], answer: "Autumn (Fall)" },
+                { question: "What is the main source of energy for life on Earth?", options: ["Moon", "Volcanoes", "Wind", "Sun"], answer: "Sun" },
+                { question: "What are birds covered in?", options: ["Fur", "Scales", "Skin", "Feathers"], answer: "Feathers" },
+                { question: "Which number is the atomic number of Oxygen?", options: ["6", "7", "8", "9"], answer: "8" },
+                { question: "What instrument is used to measure temperature?", options: ["Barometer", "Anemometer", "Thermometer", "Tachometer"], answer: "Thermometer" },
+                { question: "What causes a solar eclipse?", options: ["Earth passing Sun", "Moon between Earth and Sun", "Venus blocking Sun", "Mars orbiting Earth"], answer: "Moon between Earth and Sun" },
+                { question: "How many legs does an insect typically have?", options: ["Four", "Six", "Eight", "Ten"], answer: "Six" },
+                { question: "What substance is often called 'Black Gold'?", options: ["Coal", "Oil (Petroleum)", "Uranium", "Graphite"], answer: "Oil (Petroleum)" },
+                { question: "Which part of a seed grows into the plant's root?", options: ["Cotyledon", "Plumule", "Radicle", "Seed Coat"], answer: "Radicle" },
+                { question: "Which organ produces bile?", options: ["Stomach", "Pancreas", "Kidney", "Liver"], answer: "Liver" },
+                { question: "What is the chemical symbol for Helium?", options: ["He", "H", "Hg", "Li"], answer: "He" },
+                { question: "What is the name for the imaginary line running through the Earth's poles?", options: ["Equator", "Tropic of Cancer", "Prime Meridian", "Axis"], answer: "Axis" },
+                { question: "What is the unit of force?", options: ["Joule", "Watt", "Newton", "Pascal"], answer: "Newton" },
+                { question: "Which metal is the best conductor of electricity?", options: ["Iron", "Aluminum", "Copper", "Gold"], answer: "Copper" },
+                { question: "What protects the brain inside the skull?", options: ["Vertebrae", "Meninges", "Cartilage", "Ligaments"], answer: "Meninges" },
+                { question: "What are the building blocks of proteins?", options: ["Fatty Acids", "Glucose", "Amino Acids", "Nucleotides"], answer: "Amino Acids" },
+                { question: "What causes the sound when you clap your hands?", options: ["Light waves", "Magnetic field", "Air vibrations", "Heat transfer"], answer: "Air vibrations" },
+                { question: "Which instrument is used to measure air pressure?", options: ["Thermometer", "Hygrometer", "Barometer", "Anemometer"], answer: "Barometer" },
+                { question: "What type of energy is possessed by a moving object?", options: ["Potential", "Thermal", "Kinetic", "Chemical"], answer: "Kinetic" },
+                { question: "Which part of the eye contains the photoreceptors (rods and cones)?", options: ["Cornea", "Lens", "Iris", "Retina", ], answer: "Retina" },
+                { question: "What is the process of water changing from gas to liquid?", options: ["Evaporation", "Sublimation", "Condensation", "Precipitation"], answer: "Condensation" },
+                { question: "What is the chemical symbol for Carbon?", options: ["Ca", "Co", "C", "Cr"], answer: "C" },
+                { question: "Which famous scientist developed the theory of relativity?", options: ["Isaac Newton", "Galileo Galilei", "Albert Einstein", "Nikola Tesla"], answer: "Albert Einstein" },
+                { question: "What is the hardest natural substance on Earth?", options: ["Quartz", "Granite", "Diamond", "Iron"], answer: "Diamond" },
+                { question: "What is the scientific term for the study of weather?", options: ["Geology", "Astronomy", "Meteorology", "Ecology"], answer: "Meteorology" },
+                { question: "What is the only natural satellite of Earth?", options: ["Venus", "Mars", "The Moon", "Phobos"], answer: "The Moon" },
+                { question: "What is the primary function of red blood cells?", options: ["Fighting infection", "Clotting blood", "Carrying oxygen", "Producing antibodies"], answer: "Carrying oxygen" },
+                { question: "What is the chemical formula for Ozone?", options: ["O", "O2", "O3", "H2O"], answer: "O3" },
+                { question: "Which continent is the largest by area?", options: ["Africa", "Europe", "North America", "Asia"], answer: "Asia" },
+                { question: "What element is necessary for combustion (fire)?", options: ["Hydrogen", "Nitrogen", "Oxygen", "Carbon"], answer: "Oxygen" },
+                { question: "Which measurement system is used by most scientists worldwide?", options: ["Imperial", "Fahrenheit", "Metric (SI)", "English"], answer: "Metric (SI)" },
+                { question: "What is the name of the galaxy that contains our Solar System?", options: ["Andromeda", "Triangulum", "Pinwheel", "Milky Way"], answer: "Milky Way" },
+                { question: "What is the softest mineral on the Mohs scale?", options: ["Gypsum", "Talc", "Calcite", "Quartz"], answer: "Talc" },
+                { question: "What type of lens is thinner at the center than at the edges?", options: ["Plane", "Convex", "Concave", "Cylindrical"], answer: "Concave" },
+                { question: "What is the main compound that makes up natural gas?", options: ["Ethane", "Propane", "Butane", "Methane"], answer: "Methane" },
+                { question: "What are the specialized cells that transmit nerve signals?", options: ["Epithelial cells", "Neurons", "Glia cells", "Muscle cells"], answer: "Neurons" },
+                { question: "Which phase of the moon occurs when the moon is completely lit?", options: ["New Moon", "Half Moon", "Crescent Moon", "Full Moon"], answer: "Full Moon" },
+                { question: "What is the basic unit of inheritance?", options: ["Cell", "Protein", "Chromosome", "Gene"], answer: "Gene" },
+                { question: "What is the state of matter that is found inside stars?", options: ["Solid", "Liquid", "Gas", "Plasma"], answer: "Plasma" },
+                { question: "Which planet is famous for its rings?", options: ["Jupiter", "Uranus", "Neptune", "Saturn"], answer: "Saturn" },
+                { question: "What is the study of matter and energy?", options: ["Biology", "Chemistry", "Geology", "Physics"], answer: "Physics" },
+                { question: "What compound gives plants their green color?", options: ["Melanin", "Hemoglobin", "Chlorophyll", "Carotene"], answer: "Chlorophyll" },
+                { question: "What is the unit of electrical resistance?", options: ["Volt", "Ampere", "Ohm", "Farad"], answer: "Ohm" },
+                { question: "What type of wave is sound?", options: ["Transverse", "Electromagnetic", "Longitudinal", "Radio"], answer: "Longitudinal" },
+                { question: "What is the scientific term for a 'hot spot' on the sun's surface?", options: ["Solar Flare", "Prominence", "Sunspot", "Corona"], answer: "Sunspot" },
+                { question: "Which kingdom includes bacteria?", options: ["Fungi", "Protista", "Plantae", "Monera (Prokaryotes)"], answer: "Monera (Prokaryotes)" },
+                { question: "What is the largest bone in the human body?", options: ["Humerus", "Tibia", "Femur", "Pelvis"], answer: "Femur" },
+                { question: "The measure of the acidity or basicity of an aqueous solution is called what?", options: ["Density", "Temperature", "pH", "Salinity"], answer: "pH" },
+                { question: "What chemical symbol represents Sodium?", options: ["So", "Sd", "Na", "Ni"], answer: "Na" },
+                { question: "What is the process where a solid turns into a liquid?", options: ["Boiling", "Freezing", "Melting", "Condensation"], answer: "Melting" },
+                { question: "Which part of the plant absorbs water and nutrients from the soil?", options: ["Leaves", "Stem", "Flower", "Roots"], answer: "Roots" },
+                { question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: "Pacific" },
+                { question: "What substance do you mix with water to make saltwater?", options: ["Sugar", "Flour", "Oil", "Salt"], answer: "Salt" },
+                { question: "How many planets are in our solar system?", options: ["7", "8", "9", "10"], answer: "8" },
+                { question: "What is the name for stored energy?", options: ["Kinetic Energy", "Potential Energy", "Thermal Energy", "Chemical Energy"], answer: "Potential Energy" },
+                { question: "What is the name of the tiny pores on the surface of leaves?", options: ["Veins", "Cuticles", "Stomata", "Chloroplasts"], answer: "Stomata" },
+                { question: "What is the main component of glass?", options: ["Clay", "Lime", "Feldspar", "Silica (Sand)"], answer: "Silica (Sand)" },
+                { question: "What force keeps the planets in orbit around the Sun?", options: ["Friction", "Magnetism", "Gravity", "Tension"], answer: "Gravity" }
+            ],
+            'Medium': [
+                { question: "Which of Newton's Laws states that $F = ma$ (Force equals mass times acceleration)?", options: ["First Law", "Second Law", "Third Law", "Law of Gravity"], answer: "Second Law" },
+                { question: "What is the chemical symbol for Silver?", options: ["Au", "Ag", "Fe", "Si"], answer: "Ag" },
+                { question: "What is the process by which plants convert light energy into chemical energy?", options: ["Respiration", "Fermentation", "Photosynthesis", "Transpiration"], answer: "Photosynthesis" },
+                { question: "What astronomical body is known as the 'Morning Star' or 'Evening Star'?", options: ["Mars", "Jupiter", "Venus", "Mercury"], answer: "Venus" },
+                { question: "The Richter scale is used to measure the magnitude of what natural event?", options: ["Tornadoes", "Volcanoes", "Earthquakes", "Hurricanes"], answer: "Earthquakes" },
+                { question: "What type of chemical bond involves the transfer of electrons?", options: ["Covalent", "Metallic", "Hydrogen", "Ionic"], answer: "Ionic" },
+                { question: "How many pairs of chromosomes are in a normal human somatic cell?", options: ["22", "23", "46", "48"], answer: "23" },
+                { question: "What is the speed of sound in dry air at $20^{\circ}C$ (approximate)?", options: ["100 m/s", "343 m/s", "1,500 m/s", "300,000 km/s"], answer: "343 m/s" },
+                { question: "What is the protective sac surrounding the heart called?", options: ["Pleura", "Diaphragm", "Pericardium", "Aorta"], answer: "Pericardium" },
+                { question: "What is the approximate percentage of Nitrogen in Earth's atmosphere?", options: ["21%", "50%", "78%", "90%"], answer: "78%" },
+                { question: "Which subatomic particle carries a negative charge?", options: ["Proton", "Neutron", "Electron", "Nucleus"], answer: "Electron" },
+                { question: "What is the name of the phenomenon where sound waves are reflected back?", options: ["Refraction", "Interference", "Diffraction", "Echo"], answer: "Echo" },
+                { question: "Which famous formula relates mass and energy ($E=mc^2$)?", options: ["Ohm's Law", "Heisenberg Principle", "Theory of Relativity", "Newton's Second Law"], answer: "Theory of Relativity" },
+                { question: "What is the main component of bone?", options: ["Water", "Calcium Phosphate", "Keratin", "Collagen"], answer: "Calcium Phosphate" },
+                { question: "In computing, what does CPU stand for?", options: ["Central Power Unit", "Computer Processing Utility", "Control Program Unit", "Central Processing Unit"], answer: "Central Processing Unit" },
+                { question: "What is the term for a substance that speeds up a chemical reaction without being consumed?", options: ["Inhibitor", "Reactant", "Catalyst", "Enzyme"], answer: "Catalyst" },
+                { question: "What is the lowest temperature theoretically possible, known as absolute zero (in Kelvin)?", options: ["0 K", "100 K", "$273.15$ K", "$273.15$ K"], answer: "0 K" },
+                { question: "The period required for half of the nuclei of a specific isotope to decay is called what?", options: ["Isotope life", "Decay constant", "Half-life", "Fission time"], answer: "Half-life" },
+                { question: "What part of the brain controls balance and coordination?", options: ["Cerebrum", "Brainstem", "Thalamus", "Cerebellum"], answer: "Cerebellum" },
+                { question: "What is the largest known volcano in the solar system, located on Mars?", options: ["Arsia Mons", "Elysium Mons", "Ascraeus Mons", "Olympus Mons"], answer: "Olympus Mons" },
+                { question: "What is the chemical symbol for Tungsten?", options: ["Tu", "W", "Tn", "T"], answer: "W" },
+                { question: "What type of current is supplied by a wall outlet in most homes?", options: ["Direct Current (DC)", "Alternating Current (AC)", "Static Current", "Pulsed Current"], answer: "Alternating Current (AC)" },
+                { question: "What term describes animals that regulate their body temperature internally?", options: ["Poikilotherms", "Ectotherms", "Heterotherms", "Endotherms (Warm-blooded)"], answer: "Endotherms (Warm-blooded)" },
+                { question: "What is the difference between mass and weight?", options: ["Mass is measured in pounds", "Weight is a force (due to gravity)", "They are the same", "Weight is a vector"], answer: "Weight is a force (due to gravity)" },
+                { question: "What is the fundamental unit of the nervous system?", options: ["Nephron", "Alveolus", "Myocyte", "Neuron"], answer: "Neuron" },
+                { question: "What is the primary gas in the sun?", options: ["Oxygen", "Carbon", "Helium", "Hydrogen"], answer: "Hydrogen" },
+                { question: "What is the chemical process that causes fruit to ripen and turn brown?", options: ["Photosynthesis", "Digestion", "Oxidation", "Reduction"], answer: "Oxidation" },
+                { question: "What type of eclipse occurs when the Earth passes between the Sun and the Moon?", options: ["Solar", "Partial", "Annular", "Lunar"], answer: "Lunar" },
+                { question: "What is the formula for calculating work done in physics?", options: ["W = P/t", "W = Fd", "W = mg", "W = VI"], answer: "W = Fd" },
+                { question: "Which blood type is considered the 'universal donor'?", options: ["A+", "B-", "AB+", "O-"], answer: "O-" },
+                { question: "Which major class of organic compounds includes sugars and starch?", options: ["Lipids", "Proteins", "Nucleic Acids", "Carbohydrates"], answer: "Carbohydrates" },
+                { question: "The measure of the average kinetic energy of the particles in a substance is called what?", options: ["Heat", "Pressure", "Temperature", "Entropy"], answer: "Temperature" },
+                { question: "What is the process where bacteria convert atmospheric nitrogen into a form usable by plants?", options: ["Denitrification", "Assimilation", "Nitrogen Fixation", "Ammonification"], answer: "Nitrogen Fixation" },
+                { question: "What is the chemical symbol for Potassium?", options: ["Po", "P", "K", "Pt"], answer: "K" },
+                { question: "What planet has the most extensive system of rings?", options: ["Jupiter", "Uranus", "Neptune", "Saturn"], answer: "Saturn" },
+                { question: "What is the unit of electrical potential difference?", options: ["Ampere", "Ohm", "Watt", "Volt"], answer: "Volt" },
+                { question: "What is the region around a magnet where magnetic forces can be detected?", options: ["Pole", "Field", "Flux", "Core"], answer: "Field" },
+                { question: "Which glands are responsible for producing adrenaline?", options: ["Thyroid", "Pituitary", "Pancreas", "Adrenal"], answer: "Adrenal" },
+                { question: "What is the study of the classification of organisms called?", options: ["Ecology", "Genetics", "Taxonomy", "Anatomy"], answer: "Taxonomy" },
+                { question: "What is the term for a rapid, downhill movement of rock and soil?", options: ["Erosion", "Weathering", "Deposition", "Mass Wasting"], answer: "Mass Wasting" },
+                { question: "Which layer of the atmosphere do we live in?", options: ["Stratosphere", "Mesosphere", "Thermosphere", "Troposphere"], answer: "Troposphere" },
+                { question: "What are the three components of an atom?", options: ["Quarks, Leptons, Neutrinos", "Protons, Neutrons, Electrons", "Molecules, Ions, Compounds", "Cations, Anions, Isotopes"], answer: "Protons, Neutrons, Electrons" },
+                { question: "What is the chemical symbol for Lead?", options: ["Ld", "Le", "Pb", "P"], answer: "Pb" },
+                { question: "What is the process of generating electricity by moving a conductor through a magnetic field?", options: ["Electrolysis", "Induction", "Conduction", "Magnetization"], answer: "Induction" },
+                { question: "Which organelle is responsible for generating most of the cell's supply of ATP?", options: ["Ribosome", "Nucleus", "Endoplasmic Reticulum", "Mitochondria"], answer: "Mitochondria" },
+                { question: "What is the main function of the small intestine?", options: ["Water absorption", "Bile production", "Mechanical digestion", "Nutrient absorption"], answer: "Nutrient absorption" },
+                { question: "What is the term for the tendency of an object to resist changes in its state of motion?", options: ["Momentum", "Inertia", "Velocity", "Acceleration"], answer: "Inertia" },
+                { question: "What term describes the process of splitting an atom to release energy?", options: ["Fusion", "Isotope decay", "Fission", "Sublimation"], answer: "Fission" },
+                { question: "Which part of the plant is responsible for controlling water loss?", options: ["Xylem", "Phloem", "Root Hairs", "Stomata"], answer: "Stomata" },
+                { question: "What is the name of the fault line that runs through California, known for earthquakes?", options: ["New Madrid Fault", "Cascadia Fault", "Wasatch Fault", "San Andreas Fault"], answer: "San Andreas Fault" },
+                { question: "What is the chemical symbol for Calcium?", options: ["Ca", "Cl", "Cm", "Cs"], answer: "Ca" },
+                { question: "What type of mirror produces a real, inverted image if the object is beyond the focal point?", options: ["Plane", "Convex", "Concave", "Parabolic"], answer: "Concave" },
+                { question: "What is the name for the protective end caps on chromosomes?", options: ["Centromeres", "Histones", "Telomeres", "Nucleosomes"], answer: "Telomeres" },
+                { question: "The Law of Conservation of Energy states that energy cannot be created or destroyed, only what?", options: ["Consumed", "Lost", "Transformed", "Stored"], answer: "Transformed" },
+                { question: "What type of weathering involves the breaking down of rock by water freezing and expanding in cracks?", options: ["Chemical", "Biological", "Thermal", "Frost Wedging (Physical)"], answer: "Frost Wedging (Physical)" },
+                { question: "Which gas is primarily responsible for the Earth's greenhouse effect?", options: ["Oxygen", "Nitrogen", "Argon", "Carbon Dioxide"], answer: "Carbon Dioxide" },
+                { question: "What is the term for organisms that make their own food?", options: ["Heterotrophs", "Consumers", "Decomposers", "Autotrophs"], answer: "Autotrophs" },
+                { question: "What is the name of the spiral-shaped part of the inner ear responsible for hearing?", options: ["Ossicles", "Eardrum", "Semicircular Canal", "Cochlea"], answer: "Cochlea" },
+                { question: "What is the chemical formula for Methane?", options: ["CO2", "C2H6", "CH4", "H2O2"], answer: "CH4" },
+                { question: "What type of stars are known for collapsing and creating black holes or neutron stars?", options: ["Red Dwarfs", "White Dwarfs", "Yellow Dwarfs", "Massive Stars"], answer: "Massive Stars" },
+                { question: "In physics, what is the product of mass and velocity?", options: ["Force", "Acceleration", "Momentum", "Work"], answer: "Momentum" },
+                { question: "What is the chemical symbol for Neon?", options: ["Ne", "Ni", "N", "Na"], answer: "Ne" },
+                { question: "The theory that Earth's outer layer is divided into large plates moving relative to each other is called what?", options: ["Continental Drift", "Seafloor Spreading", "Plate Tectonics", "Isostasy"], answer: "Plate Tectonics" },
+                { question: "Which organ in the human body filters blood and produces urine?", options: ["Liver", "Pancreas", "Spleen", "Kidney"], answer: "Kidney" },
+                { question: "What is the maximum number of electrons that can be held in the first electron shell ($n=1$)?", options: ["1", "2", "4", "8"], answer: "2" },
+                { question: "What is the primary function of xylem tissue in plants?", options: ["Transporting sugar", "Photosynthesis", "Anchoring the plant", "Transporting water and minerals"], answer: "Transporting water and minerals" },
+                { question: "What is the speed of light in a vacuum (approximate value)?", options: ["343 m/s", "30,000 km/s", "300,000 km/s", "100,000 km/s"], answer: "300,000 km/s" },
+                { question: "What is the name for the point in a planet's orbit when it is closest to the Sun?", options: ["Aphelion", "Perihelion", "Apogee", "Perigee"], answer: "Perihelion" },
+                { question: "What are cells that have a nucleus and other membrane-bound organelles called?", options: ["Prokaryotes", "Viruses", "Bacteria", "Eukaryotes"], answer: "Eukaryotes" },
+                { question: "What is the term for a substance with a pH greater than 7?", options: ["Neutral", "Acid", "Solvent", "Base (Alkaline)"], answer: "Base (Alkaline)" },
+                { question: "Which type of mirror always produces a smaller, virtual image?", options: ["Plane", "Concave", "Diverging (Convex)", "Converging"], answer: "Diverging (Convex)" },
+                { question: "What is the main product of cellular respiration?", options: ["Glucose", "Oxygen", "Water", "ATP (Energy)"], answer: "ATP (Energy)" },
+                { question: "What is the chemical symbol for Zinc?", options: ["Zn", "Zr", "Z", "Si"], answer: "Zn" },
+                { question: "Which gas is used in fluorescent lamps to produce light?", options: ["Helium", "Krypton", "Xenon", "Argon"], answer: "Argon" },
+                { question: "What is the deepest point in the Earth's oceans?", options: ["Puerto Rico Trench", "Java Trench", "Mariana Trench", "Tonga Trench"], answer: "Mariana Trench" },
+                { question: "What is the primary function of the cerebellum?", options: ["Memory", "Vision", "Emotion", "Balance and Coordination"], answer: "Balance and Coordination" },
+                { question: "What is the term for a large system of stars, gas, and dust held together by gravitational attraction?", options: ["Nebula", "Cluster", "Solar System", "Galaxy"], answer: "Galaxy" },
+                { question: "What is the unit of electric charge?", options: ["Volt", "Ampere", "Ohm", "Coulomb"], answer: "Coulomb" },
+                { question: "Which compound makes up the majority of the air we breathe?", options: ["Oxygen", "Carbon Dioxide", "Water Vapor", "Nitrogen"], answer: "Nitrogen" },
+                { question: "What type of radiation is used in MRI (Magnetic Resonance Imaging)?", options: ["X-rays", "Gamma Rays", "Ultraviolet", "Radio Waves"], answer: "Radio Waves" },
+                { question: "What is the longest river in the world?", options: ["Amazon River", "Yangtze River", "Mississippi River", "Nile River"], answer: "Nile River" },
+                { question: "What is the chemical symbol for Chlorine?", options: ["Ch", "Cr", "Cl", "Co"], answer: "Cl" },
+                { question: "Which process uses yeast to convert sugar into alcohol and carbon dioxide?", options: ["Decomposition", "Hydrolysis", "Fermentation", "Saponification"], answer: "Fermentation" },
+                { question: "What is the primary factor that determines a star's lifetime and ultimate fate?", options: ["Color", "Distance from Earth", "Age", "Mass"], answer: "Mass" },
+                { question: "What is the term for the total heat content of a thermodynamic system?", options: ["Entropy", "Temperature", "Internal Energy", "Enthalpy"], answer: "Enthalpy" },
+                { question: "What is the layer of the Earth between the crust and the outer core?", options: ["Lithosphere", "Asthenosphere", "Mantle", "Inner Core"], answer: "Mantle" },
+                { question: "What is the scientific name for the common house mouse?", options: ["Homo sapiens", "Canis familiaris", "Felis catus", "Mus musculus"], answer: "Mus musculus" },
+                { question: "What part of the eye is often transplanted?", options: ["Iris", "Retina", "Lens", "Cornea"], answer: "Cornea" },
+                { question: "Which noble gas is the lightest?", options: ["Neon", "Argon", "Krypton", "Helium"], answer: "Helium" },
+                { question: "What type of joint allows movement in almost all directions (e.g., shoulder)?", options: ["Hinge", "Pivot", "Saddle", "Ball and Socket"], answer: "Ball and Socket" },
+                { question: "What is the name of the ancient supercontinent that included almost all the Earth's landmass?", options: ["Gondwana", "Laurasia", "Rodinia", "Pangaea"], answer: "Pangaea" },
+                { question: "What is the chemical symbol for Lithium?", options: ["Li", "L", "Lt", "Lm"], answer: "Li" },
+                { question: "What is the phenomenon where light bends as it passes from one medium to another?", options: ["Reflection", "Diffraction", "Refraction", "Absorption"], answer: "Refraction" },
+                { question: "Which scientist discovered penicillin?", options: ["Louis Pasteur", "Marie Curie", "Jonas Salk", "Alexander Fleming"], answer: "Alexander Fleming" },
+                { question: "What is the name of the spiral coil inside the chloroplast where photosynthesis occurs?", options: ["Stroma", "Lumen", "Thylakoids", "Grana"], answer: "Grana" },
+                { question: "What is the name of the scale used to measure the intensity of hurricanes?", options: ["Fujita Scale", "Saffir-Simpson Scale", "Beaufort Scale", "Koppen Scale"], answer: "Saffir-Simpson Scale" },
+                { question: "The measurement of an object's resistance to rotational motion is called what?", options: ["Torque", "Momentum", "Angular Velocity", "Moment of Inertia"], answer: "Moment of Inertia" },
+                { question: "What is the chemical symbol for Uranium?", options: ["Ur", "U", "Um", "Un"], answer: "U" },
+                { question: "What is the largest internal organ in the human body?", options: ["Heart", "Brain", "Kidney", "Liver"], answer: "Liver" },
+                { question: "Which planet has a Great Red Spot, a persistent high-pressure storm?", options: ["Mars", "Uranus", "Saturn", "Jupiter"], answer: "Jupiter" },
+                { question: "What are the components of DNA that encode genetic information?", options: ["Amino acids", "Sugars", "Phosphate groups", "Nitrogenous bases"], answer: "Nitrogenous bases" },
+                { question: "What type of natural disaster is measured by the Mercalli scale?", options: ["Tornadoes", "Hurricanes", "Volcanoes", "Earthquakes"], answer: "Earthquakes" },
+                { question: "What is the energy required to remove an electron from a gaseous atom or ion?", options: ["Electron affinity", "Electronegativity", "Ionization Energy", "Binding Energy"], answer: "Ionization Energy" }
+            ],
+            'Hard': [
+                { question: "What is the name of the phenomenon where an object's light is redshifted due to the expansion of space?", options: ["Hubble Shift", "Doppler Effect", "Cosmological Redshift", "Blue Shift"], answer: "Cosmological Redshift" },
+                { question: "What element has the atomic number 82?", options: ["Gold", "Barium", "Lead", "Radon"], answer: "Lead" },
+                { question: "What type of chemical bond involves the sharing of electron pairs between atoms?", options: ["Ionic", "Metallic", "Covalent", "Hydrogen"], answer: "Covalent" },
+                { question: "What is the theoretical maximum speed limit of the universe?", options: ["Sound", "Gravity", "Light", "Proton"], answer: "Light" },
+                { question: "Which layer of the atmosphere contains the ozone layer?", options: ["Troposphere", "Mesosphere", "Thermosphere", "Stratosphere"], answer: "Stratosphere" },
+                { question: "What is the chemical name for laughing gas?", options: ["Nitrous Oxide", "Carbon Monoxide", "Nitric Acid", "Ammonia"], answer: "Nitrous Oxide" },
+                { question: "What does the 'p' in 'pH' stand for?", options: ["Potential", "Proton", "Power (of Hydrogen)", "Pressure"], answer: "Power (of Hydrogen)" },
+                { question: "What is the term for a gene that has the potential to cause cancer?", options: ["Tumor Suppressor", "Oncogene", "Receptor", "Telomere"], answer: "Oncogene" },
+                { question: "What is the name of the hypothetical point where all the mass of a black hole is compressed?", options: ["Event Horizon", "Schwarzschild Radius", "Singularity", "Accretion Disk"], answer: "Singularity" },
+                { question: "Which Nobel laureate is known for his exclusion principle in quantum mechanics?", options: ["Werner Heisenberg", "Niels Bohr", "Erwin Schrödinger", "Wolfgang Pauli"], answer: "Wolfgang Pauli" },
+                { question: "What is the most abundant protein in the human body?", options: ["Actin", "Keratin", "Elastin", "Collagen"], answer: "Collagen" },
+                { question: "The measure of a fluid's resistance to flow is known as what?", options: ["Density", "Pressure", "Turbulence", "Viscosity"], answer: "Viscosity" },
+                { question: "What is the formula for calculating kinetic energy?", options: ["$E = mc^2$", "$E = hf$", "$KE = 1/2 mv^2$", "$KE = mgh$"], answer: "$KE = 1/2 mv^2$" },
+                { question: "In molecular biology, what process copies a segment of DNA into RNA?", options: ["Translation", "Replication", "Splicing", "Transcription"], answer: "Transcription" },
+                { question: "What is the chemical symbol for Antimony?", options: ["At", "Am", "Ag", "Sb"], answer: "Sb" },
+                { question: "What is the term for a rock formed by the alteration of pre-existing rock due to heat and pressure?", options: ["Sedimentary", "Igneous", "Extrusive", "Metamorphic"], answer: "Metamorphic" },
+                { question: "What is the approximate total distance from Earth to the Sun (in kilometers)?", options: ["150 million km", "1.5 million km", "1.5 billion km", "15 billion km"], answer: "150 million km" },
+                { question: "What is the scientific term for the fear of heights?", options: ["Hydrophobia", "Claustrophobia", "Arachnophobia", "Acrophobia"], answer: "Acrophobia" },
+                { question: "What element is a component of all organic matter and is the basis of organic chemistry?", options: ["Oxygen", "Hydrogen", "Nitrogen", "Carbon"], answer: "Carbon" },
+                { question: "In a standing wave, what is the term for the points of minimum displacement?", options: ["Antinodes", "Peaks", "Troughs", "Nodes"], answer: "Nodes" },
+                { question: "What is the main function of the hormone Insulin?", options: ["Regulating metabolism", "Fighting infection", "Blood clotting", "Lowering blood glucose"], answer: "Lowering blood glucose" },
+                { question: "What is the name for the theoretical boundary beyond which no information can escape a black hole?", options: ["Singularity", "Quasar", "Accretion Disk", "Event Horizon"], answer: "Event Horizon" },
+                { question: "Which scientist first proposed the concept of natural selection?", options: ["Gregor Mendel", "James Watson", "Louis Pasteur", "Charles Darwin"], answer: "Charles Darwin" },
+                { question: "What is the chemical symbol for Silicon?", options: ["Si", "Sc", "Sn", "S"], answer: "Si" },
+                { question: "What is the term for the total number of protons and neutrons in an atomic nucleus?", options: ["Atomic Number", "Valence Number", "Mass Number", "Isotope Number"], answer: "Mass Number" },
+                { question: "What phenomenon is responsible for the movement of water up a plant's stem against gravity?", options: ["Osmosis", "Turgor Pressure", "Plasmolysis", "Capillary Action"], answer: "Capillary Action" },
+                { question: "What is the name of the largest moon orbiting Saturn, known for its dense atmosphere?", options: ["Europa", "Ganymede", "Io", "Titan"], answer: "Titan" },
+                { question: "What type of energy transfer occurs via electromagnetic waves?", options: ["Conduction", "Convection", "Insulation", "Radiation"], answer: "Radiation" },
+                { question: "Which organelle is responsible for synthesizing proteins in the cell?", options: ["Golgi Apparatus", "Lysosome", "Mitochondria", "Ribosome"], answer: "Ribosome" },
+                { question: "What is the scientific study of insects?", options: ["Ichthyology", "Ornithology", "Herpetology", "Entomology"], answer: "Entomology" },
+                { question: "What is the minimum speed needed for an object to escape the gravitational influence of a massive body?", options: ["Terminal Velocity", "Critical Velocity", "Orbital Velocity", "Escape Velocity"], answer: "Escape Velocity" },
+                { question: "Which compound is the main constituent of limestone and marble?", options: ["Silica", "Sodium Chloride", "Calcium Carbonate", "Iron Oxide"], answer: "Calcium Carbonate" },
+                { question: "What is the medical term for a disorder characterized by the body's inability to produce or respond to insulin?", options: ["Hypertension", "Alzheimer's", "Arthritis", "Diabetes Mellitus"], answer: "Diabetes Mellitus" },
+                { question: "What is the name of the process where a star begins to fuse helium into carbon?", options: ["Main Sequence", "Nebula Collapse", "Triple-alpha process", "CNO Cycle"], answer: "Triple-alpha process" },
+                { question: "Which branch of physics deals with the behavior of matter and light at the atomic and subatomic level?", options: ["Classical Mechanics", "Thermodynamics", "Electromagnetism", "Quantum Mechanics"], answer: "Quantum Mechanics" },
+                { question: "What is the chemical symbol for Gold?", options: ["Gd", "Ag", "Au", "Go"], answer: "Au" },
+                { question: "In chemistry, what is the term for a substance that dissolves another substance?", options: ["Solute", "Suspension", "Solution", "Solvent"], answer: "Solvent" },
+                { question: "What type of immunity is gained through vaccination?", options: ["Natural Active", "Passive", "Natural Passive", "Artificial Active"], answer: "Artificial Active" },
+                { question: "What is the name of the giant molecular cloud from which our solar system is believed to have formed?", options: ["Andromeda Cloud", "Oort Cloud", "Kuiper Belt", "Solar Nebula"], answer: "Solar Nebula" },
+                { question: "What is the primary factor that causes tides on Earth?", options: ["Solar winds", "Earth's rotation", "Magnetic fields", "Gravitational pull of the Moon"], answer: "Gravitational pull of the Moon" },
+                { question: "What element is a key component of hemoglobin, responsible for oxygen transport?", options: ["Calcium", "Potassium", "Magnesium", "Iron"], answer: "Iron" },
+                { question: "Which law of thermodynamics states that heat flows spontaneously from hot objects to cold objects?", options: ["Zeroth Law", "First Law", "Second Law", "Third Law"], answer: "Second Law" },
+                { question: "What is the term for the large, continuous movement of ocean water caused by prevailing winds and the Coriolis effect?", options: ["Tides", "Tsunamis", "Upwelling", "Ocean Currents"], answer: "Ocean Currents" },
+                { question: "What is the scientific name for the organism responsible for malaria?", options: ["E. coli", "Salmonella", "Plasmodium", "HIV"], answer: "Plasmodium" },
+                { question: "Which type of volcanic cone is built primarily of pyroclastic fragments (cinders)?", options: ["Shield Volcano", "Stratovolcano (Composite)", "Lava Dome", "Cinder Cone"], answer: "Cinder Cone" },
+                { question: "What is the SI unit of pressure?", options: ["Newton", "Joule", "Watt", "Pascal"], answer: "Pascal" },
+                { question: "What is the difference between a virus and a bacterium?", options: ["Size", "Replication method", "Cell structure", "All of the above"], answer: "All of the above" },
+                { question: "What is the common term for the difference between a liquid's boiling point and its freezing point?", options: ["Temperature range", "Specific heat", "Phase Change Delta", "Absolute temperature"], answer: "Temperature range" },
+                { question: "What is the name of the process where light energy causes a chemical reaction?", options: ["Chemosynthesis", "Photolysis", "Thermolysis", "Electrochemistry"], answer: "Photolysis" },
+                { question: "Which planet in our solar system rotates on its axis sideways (with an axial tilt of $98$ degrees)?", options: ["Mars", "Neptune", "Uranus", "Venus"], answer: "Uranus" },
+                { question: "What is the maximum number of electrons the third energy level ($n=3$) can hold?", options: ["8", "18", "32", "50"], answer: "18" },
+                { question: "What is the scientific term for the breakdown of glucose in the absence of oxygen?", options: ["Aerobic Respiration", "Kreb's Cycle", "Electron Transport", "Anaerobic Respiration"], answer: "Anaerobic Respiration" },
+                { question: "What is the term for a boundary between two air masses with different temperatures and humidities?", options: ["Jet Stream", "Convection Current", "Isotherm", "Weather Front"], answer: "Weather Front" },
+                { question: "What is the chemical symbol for Mercury?", options: ["Mg", "Mn", "Me", "Hg"], answer: "Hg" },
+                { question: "What phenomenon explains why a siren's pitch sounds higher as it approaches you and lower as it moves away?", options: ["Refraction", "Interference", "Doppler Effect", "Beats"], answer: "Doppler Effect" },
+                { question: "What is the name of the long, coiled tube in the testes where sperm mature?", options: ["Vas Deferens", "Prostate", "Seminiferous Tubules", "Epididymis"], answer: "Epididymis" },
+                { question: "The gravitational field strength on the surface of Mars is approximately what fraction of Earth's?", options: ["$1/10$", "$1/2$", "$1/3$", "$2/3$"], answer: "$1/3$" },
+                { question: "What type of rock is formed from the cementation and compaction of sediments?", options: ["Igneous", "Magmatic", "Metamorphic", "Sedimentary"], answer: "Sedimentary" },
+                { question: "What is the process where a liquid under pressure is forced through tiny openings to form fine particles (e.g., milk)?", options: ["Distillation", "Pasteurization", "Filtration", "Homogenization"], answer: "Homogenization" },
+                { question: "What is the primary function of helper T-cells in the immune system?", options: ["Producing antibodies", "Killing infected cells", "Regulating immune response", "Phagocytosis"], answer: "Regulating immune response" },
+                { question: "Which scientific constant links the energy of a photon to its frequency?", options: ["Avogadro's Number", "Boltzmann Constant", "Stefan-Boltzmann Constant", "Planck's Constant"], answer: "Planck's Constant" },
+                { question: "What is the smallest body in the solar system considered a dwarf planet, located in the asteroid belt?", options: ["Pluto", "Haumea", "Makemake", "Ceres"], answer: "Ceres" },
+                { question: "What is the chemical symbol for Bromine?", options: ["B", "Ba", "Bo", "Br"], answer: "Br" },
+                { question: "What is the phenomenon where a magnetic field passing through a loop of wire generates an electric current?", options: ["Electrolysis", "Capacitance", "Resistance", "Electromagnetic Induction"], answer: "Electromagnetic Induction" },
+                { question: "What is the study of tissues called?", options: ["Cytology", "Physiology", "Pathology", "Histology"], answer: "Histology" },
+                { question: "What is the term for the cloud of gas and dust surrounding a comet's nucleus?", options: ["Tail", "Meteoroid", "Asteroid", "Coma"], answer: "Coma" },
+                { question: "What is the approximate total lung capacity of an average adult human (in liters)?", options: ["1-2 L", "3-4 L", "5-6 L", "7-8 L"], answer: "5-6 L" },
+                { question: "What is the term for a substance that completely dissociates into ions in an aqueous solution?", options: ["Weak Acid", "Non-electrolyte", "Strong Electrolyte", "Buffer"], answer: "Strong Electrolyte" },
+                { question: "What is the name of the process that powers the sun and other stars?", options: ["Nuclear Fission", "Chemical Combustion", "Radioactive Decay", "Nuclear Fusion"], answer: "Nuclear Fusion" },
+                { question: "Which unit is used to measure magnetic flux?", options: ["Tesla", "Henry", "Weber", "Farad"], answer: "Weber" },
+                { question: "What is the primary role of tRNA (transfer RNA) during protein synthesis?", options: ["Carrying genetic code", "Forming ribosomes", "Transporting amino acids", "Splicing mRNA"], answer: "Transporting amino acids" },
+                { question: "What is the study of the Earth's magnetic field called?", options: ["Seismology", "Petrology", "Palaeontology", "Geomagnetism"], answer: "Geomagnetism" },
+                { question: "What is the chemical symbol for Strontium?", options: ["Sr", "St", "Sn", "S"], answer: "Sr" },
+                { question: "What is the term for the maximum displacement or distance moved by a point on a vibrating body or wave measured from its equilibrium position?", options: ["Frequency", "Wavelength", "Period", "Amplitude"], answer: "Amplitude" },
+                { question: "What is the technical name for the voice box?", options: ["Pharynx", "Esophagus", "Trachea", "Larynx"], answer: "Larynx" },
+                { question: "Which moon of Jupiter is the most volcanically active body in the solar system?", options: ["Ganymede", "Callisto", "Europa", "Io"], answer: "Io" },
+                { question: "What type of chemical reaction combines an acid and a base to produce salt and water?", options: ["Redox", "Precipitation", "Decomposition", "Neutralization"], answer: "Neutralization" },
+                { question: "What is the specific name for the region in the brain responsible for regulating sleep and wakefulness?", options: ["Hippocampus", "Amygdala", "Hypothalamus", "Medulla Oblongata"], answer: "Hypothalamus" },
+                { question: "What is the chemical symbol for Barium?", options: ["B", "Be", "Ba", "Bi"], answer: "Ba" },
+                { question: "What is the unit of illuminance (how much light falls on a surface)?", options: ["Candela", "Lumen", "Lux", "Watt"], answer: "Lux" },
+                { question: "In genetics, what is the term for the observable physical or biochemical characteristics of an organism?", options: ["Allele", "Genotype", "Locus", "Phenotype"], answer: "Phenotype" },
+                { question: "What is the boundary between the Earth's crust and the mantle called?", options: ["Gutenberg Discontinuity", "Lehmann Discontinuity", "Mohorovičić Discontinuity (Moho)", "Conrad Discontinuity"], answer: "Mohorovičić Discontinuity (Moho)" },
+                { question: "What is the primary product of the dark reactions (Calvin Cycle) of photosynthesis?", options: ["Water", "ATP", "Oxygen", "Glucose"], answer: "Glucose" },
+                { question: "What is the name for the difference in electrical potential across a cell membrane, crucial for nerve impulse transmission?", options: ["Action Potential", "Threshold Voltage", "Synaptic Gap", "Resting Potential"], answer: "Resting Potential" },
+                { question: "What is the geological era that is often called the 'Age of Mammals'?", options: ["Paleozoic", "Mesozoic", "Precambrian", "Cenozoic"], answer: "Cenozoic" },
+                { question: "What type of nuclear particle is emitted during beta decay?", options: ["Alpha Particle", "Photon", "Neutron", "Electron"], answer: "Electron" },
+                { question: "Which scientist first calculated the circumference of the Earth using shadows?", options: ["Ptolemy", "Aristotle", "Eratosthenes", "Copernicus"], answer: "Eratosthenes" }
+            ]
+        };
+
+        // --- QUIZ STATE & ELEMENTS ---
+        let currentLevel = null;
+        let questionCount = 0;
+        let timePerQuestion = null;
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timerInterval = null;
+        let timeRemaining = 0;
+
+        const startScreen = document.getElementById('startScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextButton = document.getElementById('nextButton');
+        const feedbackMessage = document.getElementById('feedbackMessage');
+        const startButton = document.getElementById('startButton');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const levelDisplay = document.getElementById('levelDisplay');
+        const timerProgress = document.getElementById('timerProgress');
+
+        // --- SELECTION LOGIC ---
+        function updateStartButton() {
+            startButton.disabled = !(currentLevel && timePerQuestion);
+            if (!startButton.disabled) {
+                startButton.classList.remove('disabled:bg-gray-700', 'disabled:shadow-none', 'disabled:border-gray-600', 'disabled:text-gray-400');
+                startButton.classList.add('selected-button');
+            } else {
+                startButton.classList.remove('selected-button');
+                startButton.classList.add('disabled:bg-gray-700', 'disabled:shadow-none', 'disabled:border-gray-600', 'disabled:text-gray-400');
+            }
+        }
+
+        function selectButton(containerId, selectedButton) {
+            document.querySelectorAll(`#${containerId} .neon-button`).forEach(btn => {
+                btn.classList.remove('selected-button');
+            });
+            selectedButton.classList.add('selected-button');
+        }
+
+        function selectLevel(button) {
+            selectButton('levelOptions', button);
+            currentLevel = button.getAttribute('data-level');
+            questionCount = parseInt(button.getAttribute('data-qcount'));
+            updateStartButton();
+        }
+
+        function selectTime(button) {
+            selectButton('timeOptions', button);
+            timePerQuestion = parseInt(button.getAttribute('data-time'));
+            updateStartButton();
+        }
+
+        // --- QUIZ FLOW LOGIC ---
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startChallenge() {
+            // Take the required number of questions from the full bank
+            currentQuizQuestions = shuffleArray(allQuestions[currentLevel]).slice(0, questionCount);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            levelDisplay.textContent = `${currentLevel} LEVEL: Q${currentQuestionIndex + 1}/${questionCount} ❓`;
+
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+
+            loadQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = timePerQuestion;
+            const totalTime = timePerQuestion;
+            timerProgress.style.width = '100%';
+            timerProgress.style.transitionDuration = `${totalTime}s`;
+
+            timerDisplay.textContent = `TIME: ${timeRemaining}s ⏳`;
+
+            // Start the visual transition (CSS handles the smooth depletion)
+            setTimeout(() => {
+                timerProgress.style.width = '0%';
+            }, 50);
+
+            // Start the counter for display and timeout check
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                timerDisplay.textContent = `TIME: ${timeRemaining}s ⏳`;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerProgress.style.width = '0%';
+                    // Automatically mark incorrect and proceed
+                    selectAnswer(null, 'TIMED OUT', currentQuizQuestions[currentQuestionIndex].answer);
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questionCount) {
+                showResults();
+                return;
+            }
+
+            const currentQ = currentQuizQuestions[currentQuestionIndex];
+
+            // UI reset
+            questionText.textContent = currentQ.question;
+            optionsContainer.innerHTML = '';
+            feedbackMessage.textContent = '';
+            nextButton.disabled = true;
+            nextButton.textContent = 'NEXT >> ⏭️';
+            levelDisplay.textContent = `${currentLevel} LEVEL: Q${currentQuestionIndex + 1}/${questionCount} 🧠`;
+
+            // Start the timer for the new question
+            startTimer();
+
+            // Shuffle and render options
+            let options = [...currentQ.options];
+            options = shuffleArray(options);
+
+            options.forEach((option, index) => {
+                const emoji = ['A', 'B', 'C', 'D'][index] + ')';
+                const button = document.createElement('button');
+                button.textContent = `${emoji} ${option}`;
+                button.className = 'option-button w-full text-left p-3 rounded-lg font-medium hover:bg-gray-800 focus:outline-none';
+                button.onclick = () => selectAnswer(button, option, currentQ.answer);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedButton, selectedOption, correctAnswer) {
+            // Stop the timer immediately
+            clearInterval(timerInterval);
+            timerProgress.style.transitionDuration = '0s';
+
+            // Re-calculate the current width to freeze the bar visually
+            const progressFraction = timeRemaining > 0 ? (timeRemaining / timePerQuestion) : 0;
+            timerProgress.style.width = `${progressFraction * 100}%`;
+
+            const isCorrect = selectedOption === correctAnswer;
+            const buttons = optionsContainer.querySelectorAll('.option-button');
+
+            // Disable all buttons immediately after selection
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (isCorrect) {
+                score++;
+                if (selectedButton) selectedButton.classList.add('correct');
+                feedbackMessage.textContent = "CORRECT: Challenge Secured! ✅";
+                feedbackMessage.classList.add('neon-title');
+                feedbackMessage.classList.remove('text-red-500');
+            } else {
+                if (selectedButton && selectedOption !== 'TIMED OUT') selectedButton.classList.add('incorrect');
+                
+                // Determine feedback message for time out vs incorrect answer
+                const message = selectedOption === 'TIMED OUT' 
+                    ? `TIME'S UP! 🛑 Answer was ${correctAnswer}` 
+                    : `INCORRECT! ❌ Answer was ${correctAnswer}`;
+                    
+                feedbackMessage.textContent = message;
+                feedbackMessage.classList.add('text-red-500');
+                feedbackMessage.classList.remove('neon-title');
+
+                // Highlight the correct answer if a button exists
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes(correctAnswer)) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // If time ran out, automatically move to the next question after a brief pause
+            if (selectedOption === 'TIMED OUT') {
+                nextButton.disabled = true; // Still show next button but keep disabled
+                nextButton.textContent = 'AUTO-NEXT... ⏳';
+                setTimeout(nextQuestion, 2000);
+            } else {
+                nextButton.disabled = false;
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            document.getElementById('finalLevel').textContent = currentLevel;
+            document.getElementById('finalQCount').textContent = questionCount;
+            document.getElementById('finalScore').textContent = `${score} / ${questionCount}`;
+        }
+
+        function resetQuiz() {
+            // Reset state
+            currentLevel = null;
+            timePerQuestion = null;
+            questionCount = 0;
+
+            // Clear selections
+            document.querySelectorAll('#levelOptions .neon-button, #timeOptions .neon-button').forEach(btn => {
+                btn.classList.remove('selected-button');
+            });
+
+            // Reset UI
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            updateStartButton();
+        }
+
+        window.onload = resetQuiz;
+    </script>
+</body>
+</html>
